@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  auth-service:
+    build:
+      context: ./AuthService
+      dockerfile: Dockerfile
+    container_name: auth-service
+    hostname: auth-service
+    environment:
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://terminal-db:5432/AuthService
+      JWT_SECRET: secret
+      JWT_EXPIRATION: 86400000
+    ports:
+      - "80:8080"
+    networks:
+      - terminal-network
+    healthcheck:
+      test: curl --fail -s http://localhost:8080/health
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 6 
+    depends_on:
+      terminal-db:
+        condition: service_healthy
+  ticket-service:
+    build:
+      context: ./TicketService
+      dockerfile: Dockerfile
+    container_name: ticket-service
+    hostname: ticket-service
+    environment:
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://terminal-db:5432/TicketService
+      JWT_SECRET: secret
+    ports:
+      - "81:8080"
+    networks:
+      - terminal-network
+    healthcheck:
+      test: curl --fail -s http://localhost:8080/health
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 6
+    depends_on:
+      terminal-db:
+        condition: service_healthy
+
+
+  terminal-db:
+    image: postgres:14
+    container_name: terminal-db
+    hostname: terminal-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - terminal-network
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./migrations.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 10s
+      start_period: 5s
+      retries: 6
+
+
+networks:
+  terminal-network:
+    driver: bridge
+
+volumes:
+  db-data:
+
