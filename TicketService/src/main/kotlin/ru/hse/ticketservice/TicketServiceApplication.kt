@@ -19,10 +19,6 @@ class GlobalExceptionHandler {
     fun handleTicketServiceException(exception: TicketServiceException): ResponseEntity<Response<ResponseData>> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Response(exception.message ?: "Bad request"))
     }
-    @ExceptionHandler(Exception::class)
-    fun handleException(exception: Exception): ResponseEntity<Response<ResponseData>> {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response(exception.message ?: "Internal server error"))
-    }
 }
 
 @SpringBootApplication
